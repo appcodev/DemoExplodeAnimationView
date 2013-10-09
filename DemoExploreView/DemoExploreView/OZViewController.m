@@ -12,6 +12,8 @@
     
     IBOutlet UIImageView *iImage;
     IBOutlet UISegmentedControl *segmc;
+    
+    float numGrid;
 }
 
 @end
@@ -22,7 +24,7 @@
 {
     [super viewDidLoad];
 	// Do any additional setup after loading the view, typically from a nib.
-    
+    numGrid = 10;
     
     
 }
@@ -39,24 +41,31 @@
     
     CGSize size = eView.frame.size;
     NSMutableArray *snapshots = [NSMutableArray new];
-    
-    CGFloat xFactor = 20.0f;
-    CGFloat yFactor = xFactor * size.height/size.width;
-    
     UIView *snapshotView = [eView snapshotViewAfterScreenUpdates:YES];
     
-    for (float x=0; x<size.width; x+=size.width/xFactor) {
-        for (float y=0; y<size.height; y+=size.height/yFactor) {
-            CGRect snapshotRegion = CGRectMake(x, y, size.width/xFactor, size.height/yFactor);
-            UIView *ss = [snapshotView resizableSnapshotViewFromRect:snapshotRegion
-                                           afterScreenUpdates:NO
-                                                withCapInsets:UIEdgeInsetsZero];
-            ss.frame = snapshotRegion;
+    float numCols = numGrid;
+    float numRows = numCols * size.height/size.width;
+    float ssWidth = size.width/numCols;
+    float ssHeight = size.height/numRows;
+    for (int row=0; row<numRows; row++) {
+        for (int col=0; col<numCols; col++) {
             
-            [self.view addSubview:ss];
+            float offset = 0;
+            if (row%2==1) {
+                offset = -ssWidth/2;
+            }
+            CGRect ssSize = CGRectMake((col*ssWidth)+offset,row*ssHeight,ssWidth,ssHeight);
+            
+            UIView *ss =[snapshotView resizableSnapshotViewFromRect:ssSize
+                                                 afterScreenUpdates:NO
+                                                      withCapInsets:UIEdgeInsetsZero];
+            ss.frame = ssSize;
+            [self.view addSubview:ss];;
             [snapshots addObject:ss];
+            
         }
     }
+    
     
     //animation
     [UIView animateWithDuration:2
@@ -64,7 +73,6 @@
                          iImage.alpha = 0;
                          
                          for (UIView *view in snapshots) {
-                             
                              if (style==1) {
                                  CGFloat xOffset = [self randomFloatBetween:-100 and:100];
                                  CGFloat yOffset = [self randomFloatBetween:-100 and:100];
@@ -95,9 +103,11 @@
     return (((float) (arc4random() % ((unsigned)RAND_MAX + 1)) / RAND_MAX) * diff) + smallNumber;
 }
 - (IBAction)startExplode:(UISegmentedControl*)sender {
+    [self explodeView:iImage style:(int)sender.selectedSegmentIndex];
     
-    [self explodeView:iImage style:sender.selectedSegmentIndex];
-    
+}
+- (IBAction)changeNumGrid:(UISlider *)sender {
+    numGrid = sender.value;
 }
 
 @end
